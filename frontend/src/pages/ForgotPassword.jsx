@@ -17,9 +17,16 @@ const ForgotPassword = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let processedValue = value;
+    
+    // Convert email to lowercase
+    if (name === 'email') {
+      processedValue = value.toLowerCase();
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: processedValue
     }));
     
     // Clear specific error when user starts typing

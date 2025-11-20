@@ -28,9 +28,21 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let processedValue = value;
+    
+    // Convert email to lowercase
+    if (name === 'email') {
+      processedValue = value.toLowerCase();
+    }
+    
+    // Capitalize first letter of username
+    if (name === 'username' && value.length > 0) {
+      processedValue = value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: processedValue
     }));
     
     // Clear specific error when user starts typing
