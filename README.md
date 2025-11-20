@@ -1,4 +1,7 @@
-# Collaborative Whiteboard
+<div align="center">
+  <img src="frontend/public/favicon/android-chrome-192x192.png" alt="Drawvix Logo" width="120" height="120">
+  <h1>Collaborative Whiteboard</h1>
+</div>
 
 A Web Application That Allows Multiple Users To Draw, Write, And Collaborate On A Virtual Whiteboard In Real-time. Users Can See Updates Instantly, Communicate Via Chat, And Work Together Seamlessly.
 
@@ -8,7 +11,7 @@ A Web Application That Allows Multiple Users To Draw, Write, And Collaborate On 
 
 ![Login Screen](.github/login.png)
 
-![Whiteboard Interface](.github/whiteboard.png)
+![Whiteboard Interface](.github/whiteboard1.png)
 
 ## Key Features
 
