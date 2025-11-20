@@ -7,7 +7,7 @@ A Web Application That Allows Multiple Users To Draw, Write, And Collaborate On 
 
 ## Screenshots
 
-![Hero Section](.github/hero.png)
+![Hero Section](.github/hero.gif)
 
 ![Login Screen](.github/login.png)
 
