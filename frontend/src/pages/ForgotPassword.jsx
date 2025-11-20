@@ -1,26 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
-import { handleAuthSuccess, isAuthenticated } from '../utils/jwt';
-import socketService from '../services/socket';
 import Navbar from '../components/Navbar';
 
-const Login = () => {
+const ForgotPassword = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    dob: '',
+    newPassword: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated()) {
-      navigate('/whiteboard');
-    }
-  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,10 +40,16 @@ const Login = () => {
       newErrors.email = 'Email is invalid';
     }
 
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    if (!formData.dob) {
+      newErrors.dob = 'Date of birth is required';
+    }
+
+    if (!formData.newPassword) {
+      newErrors.newPassword = 'New password is required';
+    } else if (formData.newPassword.length < 6) {
+      newErrors.newPassword = 'Password must be at least 6 characters';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.newPassword)) {
+      newErrors.newPassword = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
     }
 
     return newErrors;
@@ -67,26 +66,26 @@ const Login = () => {
 
     setIsLoading(true);
     setErrors({});
+    setSuccessMessage('');
 
     try {
-      const response = await authAPI.login(formData);
+      // TODO: Implement forgot password API endpoint
+      // const response = await authAPI.forgotPassword(formData);
       
-      if (response.success) {
-        handleAuthSuccess(response.data);
-        
-        // Connect to socket
-        await socketService.connect();
-        
-        navigate('/whiteboard');
-      } else {
-        setErrors({ general: response.message || 'Login failed' });
-      }
+      // Simulated success for now
+      setTimeout(() => {
+        setSuccessMessage('Password reset instructions have been sent to your email.');
+        setIsLoading(false);
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
+      }, 1500);
+      
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Forgot password error:', error);
       setErrors({ 
-        general: error.response?.data?.message || 'Login failed. Please try again.' 
+        general: error.response?.data?.message || 'Failed to process request. Please try again.' 
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -109,27 +108,18 @@ const Login = () => {
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-orange-400/10 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
       </div>
 
-      <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 pt-24">
+            <div className="relative min-h-screen flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 pt-20">
         <div className="max-w-5xl w-full bg-white/80 backdrop-blur-xl shadow-2xl border border-white/50 rounded-2xl overflow-hidden flex animate-fade-in-up">
-          
-          {/* Left Side - Image */}
-          <div className="hidden lg:flex lg:w-1/2 bg-amber-50/50 p-12 items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5"></div>
-            <img 
-              src="/signin.svg" 
-              alt="Sign In" 
-              className="relative z-10 w-full h-auto object-contain transform scale-x-[-1] hover:scale-105 hover:scale-x-[-1] transition-transform duration-500" 
-            />
-          </div>
+
 
           {/* Right Side - Form */}
           <div className="w-full lg:w-1/2 py-12 px-8 sm:px-12">
             <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8">
               <h2 className="text-center text-3xl font-extrabold text-gray-900 font-serif">
-                Welcome Back
+                Forgot Password
               </h2>
               <p className="mt-2 text-center text-sm text-gray-600">
-                Sign in to continue
+                Reset. Recover. Re-enter
               </p>
             </div>
 
@@ -143,30 +133,66 @@ const Login = () => {
                 </div>
               )}
 
-              <div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                    </svg>
-                  </div>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    autoComplete="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className={`appearance-none block w-full pl-10 pr-3 py-3 border ${
-                      errors.email ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white/50'
-                    } rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent sm:text-sm transition-all duration-200`}
-                    placeholder="Email address"
-                    disabled={isLoading}
-                  />
+              {successMessage && (
+                <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  {successMessage}
                 </div>
-                {errors.email && (
-                  <p className="mt-1 text-xs text-red-600 ml-1">{errors.email}</p>
-                )}
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                      </svg>
+                    </div>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      autoComplete="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className={`appearance-none block w-full pl-10 pr-3 py-3 border ${
+                        errors.email ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white/50'
+                      } rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent sm:text-sm transition-all duration-200`}
+                      placeholder="Email address"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="mt-1 text-xs text-red-600 ml-1">{errors.email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="date"
+                      id="dob"
+                      name="dob"
+                      value={formData.dob}
+                      onChange={handleChange}
+                      className={`appearance-none block w-full pl-10 pr-3 py-3 border ${
+                        errors.dob ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white/50'
+                      } rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent sm:text-sm transition-all duration-200`}
+                      placeholder="Date of Birth"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  {errors.dob && (
+                    <p className="mt-1 text-xs text-red-600 ml-1">{errors.dob}</p>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -178,15 +204,15 @@ const Login = () => {
                   </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    name="password"
-                    autoComplete="current-password"
-                    value={formData.password}
+                    id="newPassword"
+                    name="newPassword"
+                    autoComplete="new-password"
+                    value={formData.newPassword}
                     onChange={handleChange}
                     className={`appearance-none block w-full pl-10 pr-10 py-3 border ${
-                      errors.password ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white/50'
+                      errors.newPassword ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white/50'
                     } rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent sm:text-sm transition-all duration-200`}
-                    placeholder="Password"
+                    placeholder="New Password"
                     disabled={isLoading}
                   />
                   <button
@@ -209,18 +235,9 @@ const Login = () => {
                     </svg>
                   </button>
                 </div>
-                {errors.password && (
-                  <p className="mt-1 text-xs text-red-600 ml-1">{errors.password}</p>
+                {errors.newPassword && (
+                  <p className="mt-1 text-xs text-red-600 ml-1">{errors.newPassword}</p>
                 )}
-              </div>
-
-              <div className="flex items-center justify-end mb-2">
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-amber-600 hover:text-amber-500 transition-colors"
-                >
-                  Forgot Password?
-                </Link>
               </div>
 
               <div>
@@ -235,10 +252,10 @@ const Login = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Signing in...
+                      Processing...
                     </div>
                   ) : (
-                    'Sign In'
+                    'Reset Password'
                   )}
                 </button>
               </div>
@@ -250,19 +267,29 @@ const Login = () => {
                   <div className="w-full border-t border-gray-200" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white/50 backdrop-blur-sm text-gray-500 rounded-full">New to CollabBoard?</span>
+                  <span className="px-4 bg-white/50 backdrop-blur-sm text-gray-500 rounded-full">Remember your password?</span>
                 </div>
               </div>
 
               <div className="mt-6 text-center">
                 <Link
-                  to="/register"
+                  to="/login"
                   className="font-medium text-amber-600 hover:text-amber-500 transition-colors"
                 >
-                  Create your account
+                  Back to Sign In
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Right Side - Image */}
+          <div className="hidden lg:flex lg:w-1/2 bg-amber-50/50 p-8 items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5"></div>
+            <img 
+              src="/forgotnew.svg" 
+              alt="Forgot Password" 
+              className="relative z-10 w-full h-auto object-contain transform hover:scale-105 transition-transform duration-500" 
+            />
           </div>
         </div>
       </div>
@@ -270,4 +297,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ForgotPassword;

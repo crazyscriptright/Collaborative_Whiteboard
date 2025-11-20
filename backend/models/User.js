@@ -42,7 +42,9 @@ const userSchema = new mongoose.Schema({
       default: Date.now,
       expires: 604800 // 7 days
     }
-  }]
+  }],
+  resetPasswordToken: String,
+  resetPasswordExpires: Date
 }, {
   timestamps: true
 });

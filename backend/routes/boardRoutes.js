@@ -12,7 +12,9 @@ const {
   addCollaborator,
   removeCollaborator,
   getBoardMessages,
-  sendMessage
+  sendMessage,
+  lockBoard,
+  unlockBoard
 } = require('../controllers/boardController');
 const { authenticateToken, checkBoardAccess } = require('../middleware/authMiddleware');
 
@@ -38,5 +40,9 @@ router.delete('/:boardId/collaborators/:userId', checkBoardAccess('admin'), remo
 // Chat operations
 router.get('/:boardId/messages', checkBoardAccess('viewer'), getBoardMessages);
 router.post('/:boardId/messages', checkBoardAccess('viewer'), sendMessage);
+
+// Board locking
+router.post('/:boardId/lock', checkBoardAccess('owner'), lockBoard);
+router.post('/:boardId/unlock', checkBoardAccess('owner'), unlockBoard);
 
 module.exports = router;

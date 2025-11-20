@@ -8,6 +8,7 @@ import socketService from './services/socket';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import Whiteboard from './pages/Whiteboard';
 
 // Protected Route component
@@ -65,6 +66,14 @@ function App() {
             element={
               <PublicRoute>
                 <Register />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/forgot-password" 
+            element={
+              <PublicRoute>
+                <ForgotPassword />
               </PublicRoute>
             } 
           />

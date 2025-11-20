@@ -8,9 +8,12 @@ const ChatBox = ({ board, user, isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  const emojis = ['😀', '😂', '❤️', '👍', '👎', '🎉', '🔥', '✨', '💯', '👏', '🙌', '🤝', '💪', '🎨', '🖌️', '✏️', '📝', '💡', '🚀'];
 
   // Load messages when board changes
   useEffect(() => {
@@ -181,7 +184,7 @@ const ChatBox = ({ board, user, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-5 right-5 w-96 h-[600px] bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col z-50">
+    <div className="fixed top-0 left-0 w-full h-full md:top-5 md:right-5 md:w-96 md:h-[600px] md:max-h-[calc(100vh-40px)] md:left-auto bg-white md:rounded-xl shadow-xl border border-gray-200 flex flex-col z-50">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50 rounded-t-xl">
         <div className="flex items-center gap-3">
@@ -202,7 +205,7 @@ const ChatBox = ({ board, user, isOpen, onClose }) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center text-gray-500 h-full flex items-center justify-center">
@@ -229,7 +232,7 @@ const ChatBox = ({ board, user, isOpen, onClose }) => {
                 <div className={`flex ${message.sender._id === user?.id ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
                     message.sender._id === user?.id
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white'
                       : 'bg-gray-100 text-gray-900'
                   }`}>
                     {message.sender._id !== user?.id && (
@@ -239,7 +242,7 @@ const ChatBox = ({ board, user, isOpen, onClose }) => {
                     )}
                     <div className="text-sm">{message.content}</div>
                     <div className={`text-xs mt-1 ${
-                      message.sender._id === user?.id ? 'text-primary-200' : 'text-gray-500'
+                      message.sender._id === user?.id ? 'text-amber-100' : 'text-gray-500'
                     }`}>
                       {formatTime(message.createdAt)}
                     </div>
@@ -271,20 +274,49 @@ const ChatBox = ({ board, user, isOpen, onClose }) => {
 
       {/* Input Area */}
       <div className="border-t border-gray-200 p-4">
+        {/* Emoji Picker */}
+        {showEmojiPicker && (
+          <div className="mb-2 p-2 bg-gray-50 rounded-lg border border-gray-200 grid grid-cols-10 gap-1 max-h-32 overflow-y-auto">
+            {emojis.map((emoji, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setNewMessage(prev => prev + emoji);
+                  setShowEmojiPicker(false);
+                  inputRef.current?.focus();
+                }}
+                className="text-xl hover:bg-gray-200 rounded p-1 transition-colors"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+        
         <form onSubmit={handleSendMessage} className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="text-gray-500 hover:text-amber-600 transition-colors p-2"
+            title="Add emoji"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clipRule="evenodd" />
+            </svg>
+          </button>
           <input
             ref={inputRef}
             type="text"
             value={newMessage}
             onChange={handleInputChange}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={!newMessage.trim() || isLoading}
-            className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white p-2 rounded-full transition-colors duration-200 disabled:cursor-not-allowed"
+            className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:bg-gray-300 text-white p-2 rounded-full transition-colors duration-200 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

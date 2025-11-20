@@ -3,7 +3,18 @@ const mongoose = require('mongoose');
 const drawingElementSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['line', 'rectangle', 'circle', 'text', 'freehand'],
+    enum: [
+      // Basic drawing tools
+      'pen', 'eraser', 'line', 'arrow',
+      // Shapes
+      'rectangle', 'circle', 'triangle', 'diamond', 'star', 'hexagon',
+      // Text and notes
+      'text', 'sticky-note',
+      // Media
+      'image',
+      // Legacy support
+      'freehand'
+    ],
     required: true
   },
   coordinates: {
@@ -31,6 +42,33 @@ const drawingElementSchema = new mongoose.Schema({
       min: 0,
       max: 1
     }
+  },
+  // Additional properties for specific element types
+  text: {
+    type: String,
+    required: false
+  },
+  fontSize: {
+    type: Number,
+    default: 16,
+    min: 8,
+    max: 72
+  },
+  fontFamily: {
+    type: String,
+    default: 'Arial'
+  },
+  imageData: {
+    type: String, // Base64 encoded image or URL
+    required: false
+  },
+  width: {
+    type: Number,
+    required: false
+  },
+  height: {
+    type: Number,
+    required: false
   },
   timestamp: {
     type: Date,
@@ -87,6 +125,15 @@ const boardSchema = new mongoose.Schema({
   isPublic: {
     type: Boolean,
     default: false
+  },
+  isLocked: {
+    type: Boolean,
+    default: false
+  },
+  lockedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   },
   password: {
     type: String,
@@ -191,6 +238,35 @@ boardSchema.methods.getUserRole = function(userId) {
   );
   
   return collaborator ? collaborator.role : null;
+};
+
+// Lock/unlock board
+boardSchema.methods.lockBoard = function(userId) {
+  if (this.owner.toString() !== userId.toString()) {
+    throw new Error('Only the owner can lock the board');
+  }
+  this.isLocked = true;
+  this.lockedBy = userId;
+  return this.save();
+};
+
+boardSchema.methods.unlockBoard = function(userId) {
+  if (this.owner.toString() !== userId.toString()) {
+    throw new Error('Only the owner can unlock the board');
+  }
+  this.isLocked = false;
+  this.lockedBy = null;
+  return this.save();
+};
+
+// Check if user can edit
+boardSchema.methods.canEdit = function(userId) {
+  if (this.isLocked && this.owner.toString() !== userId.toString()) {
+    return false;
+  }
+  
+  const role = this.getUserRole(userId);
+  return role === 'owner' || role === 'editor' || role === 'admin';
 };
 
 // Add drawing element

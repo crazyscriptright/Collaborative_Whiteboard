@@ -255,17 +255,23 @@ const clearBoard = async (req, res) => {
 const addCollaborator = async (req, res) => {
   try {
     const board = req.board;
-    const { username, role = 'editor' } = req.body;
+    const { username, email, role = 'editor' } = req.body;
 
-    if (!username) {
+    if (!username && !email) {
       return res.status(400).json({
         success: false,
-        message: 'Username is required'
+        message: 'Username or email is required'
       });
     }
 
     const User = require('../models/User');
-    const user = await User.findOne({ username });
+    let user;
+    
+    if (email) {
+      user = await User.findOne({ email });
+    } else {
+      user = await User.findOne({ username });
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -424,6 +430,66 @@ const sendMessage = async (req, res) => {
   }
 };
 
+// Lock board
+const lockBoard = async (req, res) => {
+  try {
+    const board = req.board;
+    const user = req.user;
+
+    if (board.owner.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the owner can lock the board'
+      });
+    }
+
+    await board.lockBoard(user._id);
+
+    res.json({
+      success: true,
+      message: 'Board locked successfully',
+      data: { board }
+    });
+
+  } catch (error) {
+    console.error('Lock board error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to lock board'
+    });
+  }
+};
+
+// Unlock board
+const unlockBoard = async (req, res) => {
+  try {
+    const board = req.board;
+    const user = req.user;
+
+    if (board.owner.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the owner can unlock the board'
+      });
+    }
+
+    await board.unlockBoard(user._id);
+
+    res.json({
+      success: true,
+      message: 'Board unlocked successfully',
+      data: { board }
+    });
+
+  } catch (error) {
+    console.error('Unlock board error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to unlock board'
+    });
+  }
+};
+
 module.exports = {
   createBoard,
   getUserBoards,
@@ -436,5 +502,7 @@ module.exports = {
   addCollaborator,
   removeCollaborator,
   getBoardMessages,
-  sendMessage
+  sendMessage,
+  lockBoard,
+  unlockBoard
 };

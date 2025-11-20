@@ -195,6 +195,18 @@ export const boardAPI = {
     const response = await api.post(`/boards/${boardId}/messages`, messageData);
     return response.data;
   },
+
+  // Lock board
+  lockBoard: async (boardId) => {
+    const response = await api.post(`/boards/${boardId}/lock`);
+    return response.data;
+  },
+
+  // Unlock board
+  unlockBoard: async (boardId) => {
+    const response = await api.post(`/boards/${boardId}/unlock`);
+    return response.data;
+  },
 };
 
 // Generic API utilities
