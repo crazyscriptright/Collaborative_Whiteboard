@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.drawvix.vercel.app"
+        }
+      ],
+      "destination": "https://drawvix.vercel.app/$1",
+      "permanent": true
+    }
+  ]
+}

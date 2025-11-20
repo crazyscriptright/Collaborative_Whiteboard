@@ -8,6 +8,7 @@ import CanvasBoard from '../components/CanvasBoard';
 import Toolbar from '../components/Toolbar';
 import ChatBox from '../components/ChatBox';
 import WhiteboardMenu from '../components/WhiteboardMenu';
+import BoardList from '../components/BoardList';
 
 const Whiteboard = () => {
   const navigate = useNavigate();
@@ -31,7 +32,15 @@ const Whiteboard = () => {
   const [shareEmail, setShareEmail] = useState('');
   const [isSharing, setIsSharing] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('synced');
+  const [bellNotifications, setBellNotifications] = useState([]);
+  const [inviteLink, setInviteLink] = useState('');
+  const [isBoardListOpen, setIsBoardListOpen] = useState(false);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const canvasRef = useRef(null);
+  const jsonInputRef = useRef(null);
+  const hasShownConnectedRef = useRef(false);
+  const lastNotificationTimeRef = useRef({});
 
   // Initialize
   useEffect(() => {
@@ -42,6 +51,9 @@ const Whiteboard = () => {
 
     const currentUser = getUser();
     setUser(currentUser);
+    
+    // Reset the connected notification flag when board changes
+    hasShownConnectedRef.current = false;
     
     // If no boardId, create a new board or redirect to board selection
     if (!boardId) {
@@ -62,6 +74,7 @@ const Whiteboard = () => {
       socketService.off('active-users');
       socketService.off('connection-lost');
       socketService.off('socket-error');
+      socketService.off('invite-received');
       
       if (socketService.getCurrentBoard()) {
         socketService.leaveBoard();
@@ -158,10 +171,28 @@ const Whiteboard = () => {
   };
 
   const handleExport = (format) => {
-    if (canvasRef.current?.exportImage) {
-      canvasRef.current.exportImage(format);
-      addNotification(`Exporting as ${format.toUpperCase()}...`, 'success');
+    if (canvasRef.current) {
+      if (format === 'json') {
+        canvasRef.current.exportJSON();
+        addNotification('Exporting as JSON...', 'success');
+      } else {
+        canvasRef.current.exportImage(format);
+        addNotification(`Exporting as ${format.toUpperCase()}...`, 'success');
+      }
     }
+  };
+
+  const handleImportClick = () => {
+    jsonInputRef.current?.click();
+  };
+
+  const handleImportFile = (e) => {
+    const file = e.target.files[0];
+    if (file && canvasRef.current) {
+      canvasRef.current.importJSON(file);
+      addNotification('Importing board...', 'success');
+    }
+    e.target.value = null;
   };
 
   const createNewBoard = async () => {
@@ -216,10 +247,16 @@ const Whiteboard = () => {
     socketService.off('active-users');
     socketService.off('connection-lost');
     socketService.off('socket-error');
+    socketService.off('invite-received');
+    socketService.off('new-message');
 
     // Board events
     socketService.on('board-joined', (data) => {
-      addNotification('Connected to board', 'success');
+      // Only show notification once per board session
+      if (!hasShownConnectedRef.current) {
+        addNotification('Connected to board', 'success');
+        hasShownConnectedRef.current = true;
+      }
     });
 
     socketService.on('user-joined', (data) => {
@@ -234,24 +271,95 @@ const Whiteboard = () => {
       setActiveUsers(data.users);
     });
 
+    socketService.on('new-message', (data) => {
+      // Don't notify if it's our own message
+      if (data.message.sender._id === user?.id || data.message.sender === user?.id) {
+        return;
+      }
+      
+      // Only show notification if chat is closed
+      if (!isChatOpen) {
+        setUnreadMessageCount(prev => prev + 1);
+        addNotification(`New message from ${data.message.senderUsername || data.senderUsername}`, 'info', () => {
+          setIsChatOpen(true);
+          setUnreadMessageCount(0);
+        });
+      } else {
+        // Chat is open, just increment count silently
+        setUnreadMessageCount(prev => prev + 1);
+      }
+    });
+
+    socketService.on('invite-received', (data) => {
+      const message = `${data.sender} invited you to board "${data.boardTitle || 'Untitled'}"`;
+      
+      addNotification(message, 'info', () => {
+        navigate(`/whiteboard/${data.boardId}`);
+      });
+
+      setBellNotifications(prev => {
+        // Prevent duplicates (check if same message received within last 2 seconds)
+        const isDuplicate = prev.some(n => 
+          n.message === message && 
+          (Date.now() - new Date(n.timestamp || Date.now()).getTime() < 2000)
+        );
+        
+        if (isDuplicate) return prev;
+
+        return [{
+          id: Date.now(),
+          message,
+          timestamp: data.timestamp || new Date(),
+          read: false,
+          boardId: data.boardId
+        }, ...prev];
+      });
+    });
+
     // Connection events
     socketService.on('connection-lost', () => {
       addNotification('Connection lost. Trying to reconnect...', 'warning');
+      setSyncStatus('error');
     });
 
     socketService.on('socket-error', (error) => {
       addNotification(error.message || 'Connection error', 'error');
+      setSyncStatus('error');
+    });
+    
+    socketService.on('reconnect', () => {
+        setSyncStatus('synced');
+        addNotification('Reconnected', 'success');
     });
   };
 
-  const addNotification = (message, type = 'info') => {
+  const handleBoardChange = () => {
+      setSyncStatus('syncing');
+      // Simulate save delay or wait for ack if implemented
+      setTimeout(() => {
+          setSyncStatus('synced');
+      }, 500);
+  };
+
+  const addNotification = (message, type = 'info', action = null) => {
+    // Check for duplicate notifications within 5 seconds
+    const now = Date.now();
+    const lastTime = lastNotificationTimeRef.current[message];
+    
+    if (lastTime && now - lastTime < 5000) {
+      return;
+    }
+    
+    lastNotificationTimeRef.current[message] = now;
+
     const notificationId = Date.now() + Math.random(); // Ensure unique ID
     const notification = {
       id: notificationId,
       message,
       type,
       timestamp: new Date(),
-      isExiting: false
+      isExiting: false,
+      action
     };
 
     setNotifications(prev => [...prev, notification]);
@@ -329,8 +437,18 @@ const Whiteboard = () => {
 
       if (response.success) {
         addNotification(`Invitation sent to ${shareEmail}`, 'success');
-        setShareEmail('');
-        setIsShareModalOpen(false);
+        
+        // Send socket notification if we can identify the user
+        // The response.data.board.collaborators contains the new user
+        // We need to find the user ID corresponding to the email we just added
+        const newCollaborator = response.data.board.collaborators.find(c => c.user.email === shareEmail || c.user.username === shareEmail);
+        if (newCollaborator && newCollaborator.user._id) {
+          socketService.sendInvite(newCollaborator.user._id, board._id, board.title);
+        }
+
+        setInviteLink(window.location.href);
+        // Don't close modal immediately, show link
+        // setIsShareModalOpen(false);
         // Refresh board data to show new collaborator if needed
         loadBoard(board._id);
       } else {
@@ -341,6 +459,23 @@ const Whiteboard = () => {
       addNotification(error.response?.data?.message || 'Failed to share board', 'error');
     } finally {
       setIsSharing(false);
+    }
+  };
+
+  const handleRenameBoard = async (newTitle) => {
+    if (!board?._id || !newTitle.trim()) return;
+    
+    try {
+      const response = await boardAPI.updateBoard(board._id, { title: newTitle });
+      if (response.success) {
+        setBoard(prev => ({ ...prev, title: newTitle }));
+        addNotification('Board renamed successfully', 'success');
+      } else {
+        addNotification('Failed to rename board', 'error');
+      }
+    } catch (error) {
+      console.error('Rename board error:', error);
+      addNotification('Failed to rename board', 'error');
     }
   };
 
@@ -375,9 +510,19 @@ const Whiteboard = () => {
   if (isLoading) {
     return (
       <Background>
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading whiteboard...</p>
+        <div className="flex flex-col items-center justify-center h-full w-full">
+          <div className="relative flex items-center justify-center">
+            <div className="w-24 h-24 border-4 border-amber-100 rounded-full"></div>
+            <div className="absolute w-24 h-24 border-4 border-amber-500 rounded-full animate-spin border-t-transparent"></div>
+            <svg className="absolute w-10 h-10 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </div>
+          <div className="mt-6 flex items-center gap-1">
+            <span className="w-3 h-3 bg-amber-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+            <span className="w-3 h-3 bg-amber-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+            <span className="w-3 h-3 bg-amber-500 rounded-full animate-bounce"></span>
+          </div>
         </div>
       </Background>
     );
@@ -408,18 +553,52 @@ const Whiteboard = () => {
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onExport={handleExport}
-          onShare={() => setIsShareModalOpen(true)}
+          onImport={handleImportClick}
+          onShare={() => {
+            setInviteLink('');
+            setShareEmail('');
+            setIsShareModalOpen(true);
+          }}
           onLock={handleLockBoard}
           onUnlock={handleUnlockBoard}
+          onOpenBoardList={() => setIsBoardListOpen(true)}
           isLocked={board?.isLocked || false}
           isOwner={board?.owner === user?.id || board?.owner?._id === user?.id}
           activeUsers={activeUsers}
+          collaborators={board?.collaborators || []}
+          notifications={bellNotifications}
           currentUser={user}
           onLogout={handleLogout}
+          syncStatus={syncStatus}
+          boardTitle={board?.title}
+          onRename={handleRenameBoard}
+        />
+        
+        {/* Board List Modal */}
+        {isBoardListOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" onClick={(e) => {
+            if (e.target === e.currentTarget) setIsBoardListOpen(false);
+          }}>
+            <BoardList 
+              onClose={() => setIsBoardListOpen(false)}
+              onSelectBoard={(id) => {
+                setIsBoardListOpen(false);
+                navigate(`/whiteboard/${id}`);
+              }}
+            />
+          </div>
+        )}
+
+        <input 
+            type="file" 
+            ref={jsonInputRef} 
+            style={{ display: 'none' }} 
+            accept=".json" 
+            onChange={handleImportFile} 
         />
 
         {/* Main Content */}
-        <div className="whiteboard-main">
+        <div className="whiteboard-main flex-1 relative overflow-auto">
           {/* Toolbar */}
           <Toolbar
             selectedTool={selectedTool}
@@ -435,14 +614,17 @@ const Whiteboard = () => {
           />
 
           {/* Canvas */}
-          <div className="canvas-container">
-            <CanvasBoard
-              ref={canvasRef}
-              board={board}
-              selectedTool={selectedTool}
-              toolSettings={toolSettings}
-              activeUsers={activeUsers}
-            />
+          <div className="canvas-container absolute inset-0 p-4 md:p-6 overflow-auto">
+            <div className="w-full h-full border-4 border-amber-200 rounded-lg shadow-lg overflow-auto bg-white">
+              <CanvasBoard
+                ref={canvasRef}
+                board={board}
+                selectedTool={selectedTool}
+                toolSettings={toolSettings}
+                activeUsers={activeUsers}
+                onBoardChange={handleBoardChange}
+              />
+            </div>
           </div>
 
           {/* Chat */}
@@ -452,12 +634,21 @@ const Whiteboard = () => {
               user={user}
               isOpen={isChatOpen}
               onClose={() => setIsChatOpen(false)}
+              onNewMessage={() => {
+                // Reset unread count when chat is open and new message arrives
+                if (isChatOpen) {
+                  setUnreadMessageCount(0);
+                }
+              }}
             />
           )}
 
           {/* Floating Chat Toggle Button */}
           <button
-            onClick={() => setIsChatOpen(!isChatOpen)}
+            onClick={() => {
+              setIsChatOpen(!isChatOpen);
+              if (!isChatOpen) setUnreadMessageCount(0);
+            }}
             className={`fixed bottom-0 left-6 w-64 h-12 bg-white border-t border-x border-gray-200 rounded-t-lg shadow-lg flex items-center justify-between px-4 transition-all duration-300 z-50 hover:bg-gray-50 ${
               isChatOpen ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0'
             }`}
@@ -469,12 +660,16 @@ const Whiteboard = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                {unreadMessageCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">
+                    {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                  </span>
+                )}
               </div>
               <span className="font-semibold text-gray-700">Messaging</span>
             </div>
             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7-7" />
             </svg>
           </button>
         </div>
@@ -486,8 +681,11 @@ const Whiteboard = () => {
               key={notification.id}
               className={`toast-notification toast-${notification.type} ${
                 notification.isExiting ? 'toast-exit' : 'toast-enter'
-              }`}
-              onClick={() => removeNotification(notification.id)}
+              } ${notification.action ? 'cursor-pointer hover:brightness-95' : ''}`}
+              onClick={() => {
+                if (notification.action) notification.action();
+                removeNotification(notification.id);
+              }}
             >
               <div className="toast-icon">
                 {notification.type === 'success' && (
@@ -549,31 +747,76 @@ const Whiteboard = () => {
               <form onSubmit={handleShareBoard}>
                 <div className="px-4 sm:px-6 py-4">
                   <div className="space-y-4">
-                    <div>
-                      <label htmlFor="shareEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        id="shareEmail"
-                        value={shareEmail}
-                        onChange={(e) => setShareEmail(e.target.value)}
-                        placeholder="colleague@example.com"
-                        required
-                        autoFocus
-                        className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
-                      />
-                    </div>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div className="flex gap-2">
-                        <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                        <p className="text-xs sm:text-sm text-blue-800">
-                          The user must have an account to be added as a collaborator. They will be able to view and edit this board.
-                        </p>
+                    {!inviteLink ? (
+                      <>
+                        <div>
+                          <label htmlFor="shareEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                            Email Address
+                          </label>
+                          <input
+                            type="email"
+                            id="shareEmail"
+                            value={shareEmail}
+                            onChange={(e) => setShareEmail(e.target.value)}
+                            placeholder="colleague@example.com"
+                            required
+                            autoFocus
+                            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+                          />
+                        </div>
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <div className="flex gap-2">
+                            <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                            <p className="text-xs sm:text-sm text-grey-800">
+                              The user must have an account to collaborate on this board.
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 mb-3 animate-bounce">
+                            <svg className="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-medium text-amber-800">Invitation Sent!</h3>
+                          <p className="text-sm text-amber-600 mt-1">
+                            {shareEmail} has been invited to the board.
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Share Link
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              readOnly
+                              value={inviteLink}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm text-gray-600"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(inviteLink);
+                                addNotification('Link copied to clipboard', 'success');
+                              }}
+                              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                              title="Copy Link"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-200">
@@ -582,30 +825,32 @@ const Whiteboard = () => {
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                     onClick={() => setIsShareModalOpen(false)}
                   >
-                    Cancel
+                    {inviteLink ? 'Close' : 'Cancel'}
                   </button>
-                  <button 
-                    type="submit" 
-                    className="px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    disabled={isSharing}
-                  >
-                    {isSharing ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                        Send Invite
-                      </>
-                    )}
-                  </button>
+                  {!inviteLink && (
+                    <button 
+                      type="submit" 
+                      className="px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      disabled={isSharing}
+                    >
+                      {isSharing ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                          </svg>
+                          Send Invite
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </form>
             </div>

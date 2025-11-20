@@ -138,6 +138,15 @@ const Toolbar = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
       )
+    },
+    { 
+      id: 'fill', 
+      name: 'Fill', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      )
     }
   ];
 
@@ -150,11 +159,11 @@ const Toolbar = ({
   const strokeWidths = [1, 2, 4, 6, 8, 12, 16, 20];
 
   return (
-    <div className={`absolute top-16 left-5 z-40 transition-transform duration-300 ${
+    <div className={`fixed top-16 md:top-20 left-2 md:left-5 z-40 transition-transform duration-300 ${
       isCollapsed ? '-translate-x-[calc(100%+20px)]' : ''
     }`}>
       <div className="relative">
-        <div className="w-64 max-w-[calc(100vw-40px)] bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col max-h-[calc(100vh-140px)] sm:max-h-[calc(100vh-120px)]">
+        <div className="w-56 md:w-64 max-w-[calc(100vw-40px)] bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col max-h-[calc(100vh-140px)] sm:max-h-[calc(100vh-120px)]">
           <div className="p-3 sm:p-4 overflow-y-auto">
             {/* Tools Section */}
               <div className="mb-4 sm:mb-6">
@@ -200,13 +209,23 @@ const Toolbar = ({
                   />
                 ))}
               </div>
-              <input
-                type="color"
-                value={toolSettings.color}
-                onChange={(e) => onToolSettingsChange({ color: e.target.value })}
-                className="w-full h-8 border border-gray-200 rounded cursor-pointer"
-                title="Custom Color"
-              />
+              <div className="flex gap-2 items-center mt-2">
+                <input
+                  type="color"
+                  value={toolSettings.color}
+                  onChange={(e) => onToolSettingsChange({ color: e.target.value })}
+                  className="w-8 h-8 border border-gray-200 rounded cursor-pointer p-0.5"
+                  title="Custom Color"
+                />
+                <input
+                  type="text"
+                  value={toolSettings.color}
+                  onChange={(e) => onToolSettingsChange({ color: e.target.value })}
+                  className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded outline-none focus:border-amber-500 uppercase"
+                  placeholder="#000000"
+                  maxLength={7}
+                />
+              </div>
             </div>
 
             {/* Stroke Width Section */}

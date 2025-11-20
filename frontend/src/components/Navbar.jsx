@@ -12,8 +12,8 @@ const Navbar = () => {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <Link to="/" className="flex items-center space-x-2">
-                  <img src="/favicon/android-chrome-192x192.png" alt="CollabBoard Logo" className="w-10 h-10 rounded-xl" />
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-900 to-orange-800 bg-clip-text text-transparent" style={{fontFamily: "'Playfair Display', serif"}}>CollabBoard</h1>
+                  <img src="/favicon/android-chrome-192x192.png" alt="Drawvix Logo" className="w-10 h-10 rounded-xl" />
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-900 to-orange-800 bg-clip-text text-transparent" style={{fontFamily: "'Playfair Display', serif"}}>Drawvix</h1>
                 </Link>
               </div>
             </div>

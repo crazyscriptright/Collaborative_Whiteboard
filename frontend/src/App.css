@@ -299,13 +299,15 @@ body {
   flex: 1;
   display: flex;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
+  min-height: 0;
 }
 
 .canvas-container {
   flex: 1;
   position: relative;
   background: white;
+  min-height: 100%;
 }
 
 /* Loading and error states */

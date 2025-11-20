@@ -130,6 +130,9 @@ const initializeSocket = (io) => {
         socket.join(boardId);
         socket.currentBoard = boardId;
         
+        // Join user's own room for personal notifications
+        socket.join(socket.user._id.toString());
+        
         // Add to active users
         addActiveUser(boardId, socket.user);
         
@@ -200,17 +203,25 @@ const initializeSocket = (io) => {
 
         // Save to database (optional, for persistence)
         if (element.persist) {
+          console.log(`Persisting element for board ${boardId}, type: ${element.type}, clientId: ${element.clientId}`);
           Board.findById(boardId).then(board => {
             if (board) {
               // Remove the clientId and _id before saving to database (let Mongoose generate _id)
               const { clientId, _id, ...elementToSave } = drawingElement;
               // Store the original client ID for reference
               elementToSave.clientId = clientId || _id;
-              board.addElement(elementToSave);
+              
+              board.addElement(elementToSave)
+                .then(() => console.log(`Element saved successfully: ${elementToSave.clientId}`))
+                .catch(err => console.error(`Failed to save element: ${err.message}`));
+            } else {
+              console.error(`Board not found for persistence: ${boardId}`);
             }
           }).catch(error => {
             console.error('Save drawing element error:', error);
           });
+        } else {
+            console.log(`Element not persisted (persist flag missing or false): ${element.type}`);
         }
 
       } catch (error) {
@@ -391,6 +402,18 @@ const initializeSocket = (io) => {
           isTyping: false
         });
       }
+    });
+
+    // Handle sending invitations/notifications
+    socket.on('send-invite', (data) => {
+      const { userId, boardId, boardTitle } = data;
+      // Send to the specific user room
+      io.to(userId).emit('invite-received', {
+        sender: socket.user.username,
+        boardId,
+        boardTitle,
+        timestamp: new Date()
+      });
     });
 
     // Handle ping for connection health

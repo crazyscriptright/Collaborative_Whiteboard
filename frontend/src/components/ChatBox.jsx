@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { boardAPI } from '../services/api';
 import socketService from '../services/socket';
 
-const ChatBox = ({ board, user, isOpen, onClose }) => {
+const ChatBox = ({ board, user, isOpen, onClose, onNewMessage }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,6 +38,10 @@ const ChatBox = ({ board, user, isOpen, onClose }) => {
   useEffect(() => {
     const handleNewMessage = (data) => {
       setMessages(prev => [...prev, data.message]);
+      // Notify parent component about new message
+      if (onNewMessage) {
+        onNewMessage(data.message);
+      }
     };
 
     const handleUserTyping = (data) => {

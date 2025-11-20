@@ -9,7 +9,7 @@ const Footer = () => {
       title: "Privacy Policy",
       content: (
         <div className="space-y-4">
-          <p>At CollabBoard, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our collaborative whiteboard platform.</p>
+          <p>At Drawvix, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our collaborative whiteboard platform.</p>
           <h3 className="text-lg font-semibold text-amber-800">Information We Collect</h3>
           <p>We collect information that you provide directly to us when you register for an account, create a profile, or use our interactive features. This may include your name, email address, and any content you create on our whiteboards.</p>
           <h3 className="text-lg font-semibold text-amber-800">How We Use Your Information</h3>
@@ -21,11 +21,11 @@ const Footer = () => {
       title: "Terms of Service",
       content: (
         <div className="space-y-4">
-          <p>Welcome to CollabBoard. By accessing or using our website and services, you agree to be bound by these Terms of Service.</p>
+          <p>Welcome to Drawvix. By accessing or using our website and services, you agree to be bound by these Terms of Service.</p>
           <h3 className="text-lg font-semibold text-amber-800">Use of Service</h3>
-          <p>You agree to use CollabBoard only for lawful purposes and in accordance with these Terms. You are responsible for all activity that occurs under your account.</p>
+          <p>You agree to use Drawvix only for lawful purposes and in accordance with these Terms. You are responsible for all activity that occurs under your account.</p>
           <h3 className="text-lg font-semibold text-amber-800">Intellectual Property</h3>
-          <p>The service and its original content, features, and functionality are and will remain the exclusive property of CollabBoard and its licensors.</p>
+          <p>The service and its original content, features, and functionality are and will remain the exclusive property of Drawvix and its licensors.</p>
         </div>
       )
     },
@@ -33,7 +33,7 @@ const Footer = () => {
       title: "Cookie Policy",
       content: (
         <div className="space-y-4">
-          <p>CollabBoard uses cookies to enhance your experience on our platform. This Cookie Policy explains what cookies are, how we use them, and your choices regarding cookies.</p>
+          <p>Drawvix uses cookies to enhance your experience on our platform. This Cookie Policy explains what cookies are, how we use them, and your choices regarding cookies.</p>
           <h3 className="text-lg font-semibold text-amber-800">What Are Cookies?</h3>
           <p>Cookies are small text files that are stored on your device when you visit a website. They help us remember your preferences and understand how you use our site.</p>
           <h3 className="text-lg font-semibold text-amber-800">Types of Cookies We Use</h3>
@@ -74,9 +74,9 @@ const Footer = () => {
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-6">
-              <img src="/favicon/android-chrome-192x192.png" alt="CollabBoard Logo" className="w-10 h-10 rounded-lg" />
+              <img src="/favicon/android-chrome-192x192.png" alt="Drawvix Logo" className="w-10 h-10 rounded-lg" />
               <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-900 to-orange-800 bg-clip-text text-transparent" style={{fontFamily: "'Playfair Display', serif"}}>
-                CollabBoard
+                Drawvix
               </h3>
             </div>
             <p className="text-amber-800/80 leading-relaxed max-w-md mb-6" style={{fontFamily: "'Inter', sans-serif"}}>
@@ -131,7 +131,7 @@ const Footer = () => {
         
         <div className="border-t border-amber-100 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-amber-800/60 text-sm">&copy; 2025 CollabBoard. All rights reserved.</p>
+            <p className="text-amber-800/60 text-sm">&copy; 2025 Drawvix. All rights reserved.</p>
             <div className="flex gap-6 text-sm">
               <button onClick={() => setActiveModal('privacy')} className="text-amber-800/60 hover:text-amber-800 transition-colors duration-200">Privacy Policy</button>
               <button onClick={() => setActiveModal('terms')} className="text-amber-800/60 hover:text-amber-800 transition-colors duration-200">Terms of Service</button>

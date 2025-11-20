@@ -7,8 +7,35 @@ const createBoard = async (req, res) => {
     const { title, description, isPublic, background, dimensions, tags } = req.body;
     const user = req.user;
 
+    let boardTitle = title;
+
+    // If no title provided, generate a unique default title
+    if (!boardTitle || !boardTitle.trim()) {
+      // Find all boards owned by user that start with "Untitled Board"
+      const untitledBoards = await Board.find({
+        owner: user._id,
+        title: { $regex: /^Untitled Board( \d+)?$/ }
+      }).select('title');
+
+      if (untitledBoards.length === 0) {
+        boardTitle = 'Untitled Board 1';
+      } else {
+        // Extract numbers and find the max
+        const numbers = untitledBoards.map(b => {
+          const match = b.title.match(/^Untitled Board( (\d+))?$/);
+          if (match) {
+            return match[2] ? parseInt(match[2]) : 1;
+          }
+          return 0;
+        });
+        
+        const maxNum = Math.max(...numbers, 0);
+        boardTitle = `Untitled Board ${maxNum + 1}`;
+      }
+    }
+
     const board = new Board({
-      title: title || 'Untitled Board',
+      title: boardTitle,
       description,
       owner: user._id,
       isPublic: isPublic || false,

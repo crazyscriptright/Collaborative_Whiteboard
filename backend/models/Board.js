@@ -271,7 +271,27 @@ boardSchema.methods.canEdit = function(userId) {
 
 // Add drawing element
 boardSchema.methods.addElement = function(element) {
-  this.elements.push(element);
+  // Check if element with same clientId exists
+  if (element.clientId) {
+    const existingIndex = this.elements.findIndex(el => el.clientId === element.clientId);
+    
+    if (existingIndex !== -1) {
+      // Update existing element
+      // We need to preserve the _id of the existing element to avoid Mongoose errors
+      const existingElement = this.elements[existingIndex];
+      const updatedElement = { ...element };
+      delete updatedElement._id; // Ensure we don't overwrite _id with something else
+      
+      // Mongoose subdocuments are objects, so we can assign properties
+      // But replacing the whole object in the array is cleaner if we handle _id
+      this.elements[existingIndex] = { ...existingElement.toObject(), ...updatedElement };
+    } else {
+      this.elements.push(element);
+    }
+  } else {
+    this.elements.push(element);
+  }
+  
   this.markModified('elements');
   return this.save();
 };
@@ -279,7 +299,7 @@ boardSchema.methods.addElement = function(element) {
 // Remove drawing element
 boardSchema.methods.removeElement = function(elementId) {
   this.elements = this.elements.filter(
-    element => element._id !== elementId
+    element => element._id.toString() !== elementId && element.clientId !== elementId
   );
   this.markModified('elements');
   return this.save();

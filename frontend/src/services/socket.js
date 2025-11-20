@@ -162,6 +162,11 @@ class SocketService {
       this.emit('user-typing', data);
     });
 
+    // Notification events
+    this.socket.on('invite-received', (data) => {
+      this.emit('invite-received', data);
+    });
+
     // Connection health
     this.socket.on('pong', () => {
       this.emit('pong');
@@ -284,6 +289,17 @@ class SocketService {
     if (!this.socket || !this.isConnected) return;
     
     this.socket.emit('typing-stop', { boardId });
+  }
+
+  // Notification methods
+  sendInvite(userId, boardId, boardTitle) {
+    if (!this.socket || !this.isConnected) return;
+    
+    this.socket.emit('send-invite', {
+      userId,
+      boardId,
+      boardTitle
+    });
   }
 
   // Connection health check
