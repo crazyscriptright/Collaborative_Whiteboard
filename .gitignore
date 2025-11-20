@@ -10,7 +10,8 @@
 /frontend/.env
 /backend/.env
 /*/.env
-/*/production.env
+/frontend/production.env
+/backend/production.env
 # other common ignores
 .DS_Store
 .vscode

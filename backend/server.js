@@ -17,8 +17,8 @@ const server = http.createServer(app);
 
 // Environment variables
 const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const FRONTEND_URL = process.env.VITE_FRONTEND_URL || 'http://localhost:5173';
+const NODE_ENV = process.env.NODE_ENV;
+const FRONTEND_URL = process.env.FRONTEND_URL || process.env.VITE_FRONTEND_URL || 'https://drawvix.vercel.app';
 
 // CORS configuration
 const corsOptions = {
@@ -28,19 +28,18 @@ const corsOptions = {
     
     const allowedOrigins = [
       FRONTEND_URL,
+      'https://drawvix.vercel.app',
+      'https://www.drawvix.vercel.app',
       'http://localhost:5173',
       'http://localhost:3000',
-      'http://127.0.0.1:5173',
-      'http://127.0.0.1:3000'
     ];
 
     // In production, add your deployed frontend URL
     if (NODE_ENV === 'production') {
-      // Add your production frontend URL here
-      // allowedOrigins.push('https://your-frontend-domain.com');
+      if (FRONTEND_URL) allowedOrigins.push(FRONTEND_URL);
     }
 
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(o => o && origin.startsWith(o))) {
       callback(null, true);
     } else {
       console.warn(`Blocked by CORS: ${origin}`);
@@ -49,7 +48,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['set-cookie']
 };
 
