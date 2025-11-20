@@ -11,7 +11,7 @@ A Web Application That Allows Multiple Users To Draw, Write, And Collaborate On 
 
 ![Login Screen](.github/login.png)
 
-![Whiteboard Interface](.github/whiteboard1.png)
+![Whiteboard Interface](.github/whiteboard.png)
 
 ## Key Features
 
