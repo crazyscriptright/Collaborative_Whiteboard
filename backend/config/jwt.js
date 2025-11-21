@@ -1,8 +1,8 @@
 module.exports = {
-  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || 'default_access_secret_change_in_production',
-  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'default_refresh_secret_change_in_production',
-  ACCESS_TOKEN_EXPIRES: process.env.ACCESS_TOKEN_EXPIRES || '15m',
-  REFRESH_TOKEN_EXPIRES: process.env.REFRESH_TOKEN_EXPIRES || '7d',
+  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET ,
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
+  ACCESS_TOKEN_EXPIRES: process.env.ACCESS_TOKEN_EXPIRES,
+  REFRESH_TOKEN_EXPIRES: process.env.REFRESH_TOKEN_EXPIRES,
   
   // Cookie settings for production
   COOKIE_OPTIONS: {

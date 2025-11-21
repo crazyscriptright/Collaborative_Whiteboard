@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { isAuthenticated, getUser, clearAuth } from '../utils/jwt';
+import { isAuthenticated, getUser, clearAuth, saveLastBoardUrl, getLastBoardUrl } from '../utils/jwt';
 import { boardAPI, authAPI } from '../services/api';
 import socketService from '../services/socket';
 import Background from '../components/Background';
@@ -41,6 +41,7 @@ const Whiteboard = () => {
   const jsonInputRef = useRef(null);
   const hasShownConnectedRef = useRef(false);
   const lastNotificationTimeRef = useRef({});
+  const isCreatingBoardRef = useRef(false);
 
   // Initialize
   useEffect(() => {
@@ -55,11 +56,20 @@ const Whiteboard = () => {
     // Reset the connected notification flag when board changes
     hasShownConnectedRef.current = false;
     
-    // If no boardId, create a new board or redirect to board selection
+    // Reset error state when boardId changes
+    setError(null);
+    
+    // If no boardId, check for last visited board or create new
     if (!boardId) {
-      createNewBoard();
+      const lastBoardUrl = getLastBoardUrl();
+      if (lastBoardUrl) {
+        navigate(lastBoardUrl);
+      } else {
+        createNewBoard();
+      }
     } else {
       loadBoard(boardId);
+      saveLastBoardUrl(boardId);
     }
 
     // Set up socket event listeners
@@ -196,7 +206,12 @@ const Whiteboard = () => {
   };
 
   const createNewBoard = async () => {
+    if (isCreatingBoardRef.current) {
+      return; // Prevent double creation
+    }
+    
     try {
+      isCreatingBoardRef.current = true;
       const response = await boardAPI.createBoard({
         title: 'New Whiteboard',
         isPublic: false
@@ -210,6 +225,8 @@ const Whiteboard = () => {
     } catch (error) {
       console.error('Create board error:', error);
       setError('Failed to create new board');
+    } finally {
+      isCreatingBoardRef.current = false;
     }
   };
 
@@ -531,12 +548,41 @@ const Whiteboard = () => {
   if (error) {
     return (
       <Background>
-        <div className="error-container">
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button onClick={() => navigate('/whiteboard')} className="retry-button">
-            Create New Board
-          </button>
+        <div className="flex flex-col items-center justify-center h-full w-full px-4">
+          <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+            {/* Error Icon */}
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+              <svg className="h-10 w-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            
+            {/* Error Message */}
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button 
+                onClick={() => window.location.reload()} 
+                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Try Again
+              </button>
+              <button 
+                onClick={() => navigate('/whiteboard', { replace: true })} 
+                className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Create New Board
+              </button>
+            </div>
+          </div>
         </div>
       </Background>
     );
@@ -584,6 +630,14 @@ const Whiteboard = () => {
               onSelectBoard={(id) => {
                 setIsBoardListOpen(false);
                 navigate(`/whiteboard/${id}`);
+              }}
+              currentBoardId={boardId}
+              onBoardDeleted={(deletedId) => {
+                setIsBoardListOpen(false);
+                // Clear error state before navigation
+                setError(null);
+                setIsLoading(true);
+                navigate('/whiteboard', { replace: true });
               }}
             />
           </div>

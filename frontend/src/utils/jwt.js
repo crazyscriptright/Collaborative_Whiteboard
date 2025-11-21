@@ -2,6 +2,7 @@
 
 const TOKEN_KEY = 'whiteboard_access_token';
 const USER_KEY = 'whiteboard_user';
+const LAST_BOARD_KEY = 'whiteboard_last_board_url';
 
 /**
  * Save access token to localStorage
@@ -174,6 +175,31 @@ export const handleAuthSuccess = (authData) => {
   if (authData.user) {
     saveUser(authData.user);
   }
+};
+
+/**
+ * Save last visited board URL
+ * @param {string} boardId - Board ID
+ */
+export const saveLastBoardUrl = (boardId) => {
+  if (boardId) {
+    localStorage.setItem(LAST_BOARD_KEY, `/whiteboard/${boardId}`);
+  }
+};
+
+/**
+ * Get last visited board URL
+ * @returns {string|null} - Last board URL or null
+ */
+export const getLastBoardUrl = () => {
+  return localStorage.getItem(LAST_BOARD_KEY);
+};
+
+/**
+ * Remove last board URL from localStorage
+ */
+export const removeLastBoardUrl = () => {
+  localStorage.removeItem(LAST_BOARD_KEY);
 };
 
 /**

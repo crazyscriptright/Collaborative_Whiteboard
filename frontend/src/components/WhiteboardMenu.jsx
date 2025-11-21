@@ -126,6 +126,13 @@ const WhiteboardMenu = ({
 
   const menus = {
     File: [
+      { label: 'New Board', action: () => {
+        // Clear last board URL and create new board
+        if (window.localStorage) {
+          window.localStorage.removeItem('whiteboard_last_board_url');
+        }
+        window.location.href = '/whiteboard';
+      }},
       { label: 'My Boards', action: onOpenBoardList },
       { label: 'Save Board', shortcut: 'Ctrl+S', action: onSave },
       { label: 'Export as PNG', action: () => onExport('png') },
