@@ -22,7 +22,9 @@ const WhiteboardMenu = ({
   onLogout,
   syncStatus = 'synced', // 'synced', 'syncing', 'error'
   boardTitle,
-  onRename
+  onRename,
+  onMarkAsRead,
+  onMarkAllAsRead
 }) => {
   const [activeMenu, setActiveMenu] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -259,8 +261,16 @@ const WhiteboardMenu = ({
 
             {showNotifications && (
               <div className="fixed sm:absolute top-14 sm:top-full right-2 sm:right-0 sm:mt-2 w-[calc(100vw-16px)] max-w-sm sm:w-80 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-4 py-2 border-b border-gray-100">
+                <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
                   <h3 className="font-semibold text-gray-900">Notifications</h3>
+                  {unreadNotifications > 0 && (
+                    <button 
+                      onClick={onMarkAllAsRead}
+                      className="text-xs text-amber-600 hover:text-amber-700 font-medium"
+                    >
+                      Mark all read
+                    </button>
+                  )}
                 </div>
                 <div className="max-h-64 overflow-y-auto">
                   {notifications.length === 0 ? (
@@ -271,8 +281,11 @@ const WhiteboardMenu = ({
                     notifications.map((notification, idx) => (
                       <div 
                         key={idx} 
-                        className={`px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 cursor-pointer transition-colors ${notification.read ? 'opacity-60' : ''}`}
+                        className={`px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 cursor-pointer transition-colors ${notification.read ? 'opacity-60' : 'bg-amber-50/30'}`}
                         onClick={() => {
+                          if (!notification.read) {
+                            onMarkAsRead(notification.id);
+                          }
                           if (notification.boardId) {
                             window.location.href = `/whiteboard/${notification.boardId}`;
                           }

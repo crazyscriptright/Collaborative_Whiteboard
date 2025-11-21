@@ -296,7 +296,7 @@ class SocketService {
     if (!this.socket || !this.isConnected) return;
     
     this.socket.emit('send-invite', {
-      userId,
+      userId: typeof userId === 'object' ? userId.toString() : userId,
       boardId,
       boardTitle
     });
@@ -320,6 +320,12 @@ class SocketService {
   off(event, callback) {
     if (!this.eventListeners.has(event)) return;
     
+    if (!callback) {
+      // Remove all listeners for this event
+      this.eventListeners.delete(event);
+      return;
+    }
+
     const listeners = this.eventListeners.get(event);
     const index = listeners.indexOf(callback);
     if (index > -1) {

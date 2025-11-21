@@ -1717,8 +1717,13 @@ const CanvasBoard = forwardRef(({
   const handleTouchStart = (e) => {
     lastTouchTimeRef.current = Date.now();
     
+    // If Hand tool, allow native behavior (scrolling)
+    if (selectedTool === 'hand') {
+      return;
+    }
+    
     // Two-finger touch or Hand tool for panning
-    if (e.touches.length === 2 || selectedTool === 'hand') {
+    if (e.touches.length === 2) {
       if (isDrawing) {
         stopDrawing();
       }
@@ -1765,7 +1770,7 @@ const CanvasBoard = forwardRef(({
         style={{
           display: 'block',
           cursor: cursor,
-          touchAction: 'none',
+          touchAction: selectedTool === 'hand' ? 'auto' : 'none',
           width: '3000px',
           height: '2000px'
         }}

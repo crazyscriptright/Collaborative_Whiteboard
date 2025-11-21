@@ -2,6 +2,7 @@ const { verifyAccessToken } = require('../utils/jwtUtils');
 const User = require('../models/User');
 const Board = require('../models/Board');
 const Message = require('../models/Message');
+const Notification = require('../models/Notification');
 
 // Store active users per board
 const activeUsers = new Map();
@@ -120,10 +121,12 @@ const initializeSocket = (io) => {
           return;
         }
 
-        // Leave previous rooms
+        // Leave previous rooms (except socket.id and user's personal room)
         const rooms = Array.from(socket.rooms);
+        const userRoom = socket.user._id.toString();
+
         rooms.forEach(room => {
-          if (room !== socket.id) {
+          if (room !== socket.id && room !== userRoom) {
             socket.leave(room);
             removeActiveUser(room, socket.user._id);
           }
@@ -408,15 +411,33 @@ const initializeSocket = (io) => {
     });
 
     // Handle sending invitations/notifications
-    socket.on('send-invite', (data) => {
+    socket.on('send-invite', async (data) => {
       const { userId, boardId, boardTitle } = data;
-      // Send to the specific user room
-      io.to(userId).emit('invite-received', {
-        sender: socket.user.username,
-        boardId,
-        boardTitle,
-        timestamp: new Date()
-      });
+      
+      try {
+        // Create notification in database
+        const notification = new Notification({
+          recipient: userId,
+          sender: socket.user._id,
+          type: 'invite',
+          message: `${socket.user.username} invited you to join "${boardTitle}"`,
+          boardId: boardId
+        });
+        
+        await notification.save();
+        
+        // Send to the specific user room
+        io.to(userId).emit('invite-received', {
+          _id: notification._id,
+          sender: socket.user.username,
+          boardId,
+          boardTitle,
+          message: notification.message,
+          timestamp: notification.createdAt
+        });
+      } catch (error) {
+        console.error('Send invite error:', error);
+      }
     });
 
     // Handle collaborator added event

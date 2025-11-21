@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { isAuthenticated, getUser, clearAuth, saveLastBoardUrl, getLastBoardUrl } from '../utils/jwt';
-import { boardAPI, authAPI } from '../services/api';
+import { boardAPI, authAPI, notificationAPI } from '../services/api';
 import socketService from '../services/socket';
 import Background from '../components/Background';
 import CanvasBoard from '../components/CanvasBoard';
@@ -43,6 +43,26 @@ const Whiteboard = () => {
   const lastNotificationTimeRef = useRef({});
   const isCreatingBoardRef = useRef(false);
 
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const response = await notificationAPI.getNotifications();
+      if (response.success) {
+        const formattedNotifications = response.data.notifications.map(n => ({
+          id: n._id,
+          message: n.message,
+          timestamp: n.createdAt,
+          read: n.read,
+          boardId: n.boardId?._id || n.boardId,
+          type: n.type
+        }));
+        setBellNotifications(formattedNotifications);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
+
   // Initialize
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -52,6 +72,9 @@ const Whiteboard = () => {
 
     const currentUser = getUser();
     setUser(currentUser);
+    
+    // Fetch notifications
+    fetchNotifications();
     
     // Reset the connected notification flag when board changes
     hasShownConnectedRef.current = false;
@@ -75,6 +98,9 @@ const Whiteboard = () => {
     // Set up socket event listeners
     setupSocketListeners();
 
+    // Fetch notifications
+    fetchNotifications();
+
     // Cleanup
     return () => {
       // Remove all socket listeners
@@ -85,6 +111,9 @@ const Whiteboard = () => {
       socketService.off('connection-lost');
       socketService.off('socket-error');
       socketService.off('invite-received');
+      socketService.off('new-message');
+      socketService.off('collaborator-added');
+      socketService.off('reconnect');
       
       if (socketService.getCurrentBoard()) {
         socketService.leaveBoard();
@@ -266,6 +295,8 @@ const Whiteboard = () => {
     socketService.off('socket-error');
     socketService.off('invite-received');
     socketService.off('new-message');
+    socketService.off('collaborator-added');
+    socketService.off('reconnect');
 
     // Board events
     socketService.on('board-joined', (data) => {
@@ -324,7 +355,7 @@ const Whiteboard = () => {
         if (isDuplicate) return prev;
 
         return [{
-          id: Date.now(),
+          id: data._id || Date.now(),
           message,
           timestamp: data.timestamp || new Date(),
           read: false,
@@ -472,7 +503,11 @@ const Whiteboard = () => {
         // Send socket notification if we can identify the user
         // The response.data.board.collaborators contains the new user
         // We need to find the user ID corresponding to the email we just added
-        const newCollaborator = response.data.board.collaborators.find(c => c.user.email === shareEmail || c.user.username === shareEmail);
+        const newCollaborator = response.data.board.collaborators.find(c => 
+          (c.user.email && c.user.email.toLowerCase() === shareEmail.toLowerCase()) || 
+          (c.user.username && c.user.username.toLowerCase() === shareEmail.toLowerCase())
+        );
+        
         if (newCollaborator && newCollaborator.user._id) {
           socketService.sendInvite(newCollaborator.user._id, board._id, board.title);
           // Notify all board users about new collaborator
@@ -542,6 +577,26 @@ const Whiteboard = () => {
       }
     } catch (error) {
       addNotification('Failed to unlock board', 'error');
+    }
+  };
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await notificationAPI.markAsRead(id);
+      setBellNotifications(prev => prev.map(n => 
+        n.id === id ? { ...n, read: true } : n
+      ));
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationAPI.markAllAsRead();
+      setBellNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
     }
   };
 
@@ -639,6 +694,8 @@ const Whiteboard = () => {
           syncStatus={syncStatus}
           boardTitle={board?.title}
           onRename={handleRenameBoard}
+          onMarkAsRead={handleMarkAsRead}
+          onMarkAllAsRead={handleMarkAllAsRead}
         />
         
         {/* Board List Modal */}
