@@ -100,6 +100,9 @@ const initializeSocket = (io) => {
   io.on('connection', (socket) => {
     console.log(`User ${socket.user.username} connected`);
 
+    // Join user's own room for personal notifications
+    socket.join(socket.user._id.toString());
+
     // Join board room
     socket.on('join-board', async (data) => {
       try {
@@ -131,7 +134,7 @@ const initializeSocket = (io) => {
         socket.currentBoard = boardId;
         
         // Join user's own room for personal notifications
-        socket.join(socket.user._id.toString());
+        // socket.join(socket.user._id.toString()); // Moved to connection event
         
         // Add to active users
         addActiveUser(boardId, socket.user);
@@ -145,8 +148,8 @@ const initializeSocket = (io) => {
           }
         });
 
-        // Send current active users to the joining user
-        socket.emit('active-users', {
+        // Broadcast updated active users list to EVERYONE in the board
+        io.to(boardId).emit('active-users', {
           users: getActiveUsers(boardId)
         });
 

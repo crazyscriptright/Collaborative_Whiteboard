@@ -219,25 +219,25 @@ const WhiteboardMenu = ({
         </div>
 
         {/* Right side - Active Users and User Menu */}
-        <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
-          {/* Sync Status - Hide on very small screens */}
-          <div className="hidden sm:flex items-center text-gray-500" title={
+        <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
+          {/* Sync Status */}
+          <div className="flex items-center text-gray-500" title={
             syncStatus === 'synced' ? 'Saved to cloud' : 
             syncStatus === 'syncing' ? 'Saving...' : 'Offline / Not Saved'
           }>
             {syncStatus === 'syncing' && (
-              <svg className="w-4 h-4 md:w-5 md:h-5 animate-spin text-amber-500" fill="none" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-amber-500" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             )}
             {syncStatus === 'synced' && (
-              <svg className="w-4 h-4 md:w-5 md:h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             )}
             {syncStatus === 'error' && (
-              <svg className="w-4 h-4 md:w-5 md:h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
               </svg>
             )}
@@ -253,12 +253,12 @@ const WhiteboardMenu = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
               {unreadNotifications > 0 && (
-                <span className="absolute top-0 right-0 block h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-red-500 ring-1 sm:ring-2 ring-white"></span>
+                <span className="absolute top-0 right-0 block h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
               )}
             </button>
 
             {showNotifications && (
-              <div className="absolute top-full right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-md bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div className="fixed sm:absolute top-14 sm:top-full right-2 sm:right-0 sm:mt-2 w-[calc(100vw-16px)] max-w-sm sm:w-80 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
                 <div className="px-4 py-2 border-b border-gray-100">
                   <h3 className="font-semibold text-gray-900">Notifications</h3>
                 </div>
@@ -291,14 +291,14 @@ const WhiteboardMenu = ({
           {/* Active Users Button */}
           <button
             onClick={() => setShowUserModal(true)}
-            className="flex items-center gap-1 px-1.5 sm:px-2 md:px-3 py-1 rounded hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2 py-1 rounded hover:bg-gray-100 transition-colors"
             title="View Active Users"
           >
             <div className="flex items-center -space-x-1.5 sm:-space-x-2">
-              {activeUsers.slice(0, 3).map((user, idx) => (
+              {activeUsers.slice(0, 2).map((user, idx) => (
                 <div
                   key={user.id}
-                  className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] sm:text-[10px] md:text-xs font-medium border-2 border-white"
+                  className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] sm:text-xs font-medium border-2 border-white"
                   title={user.username}
                 >
                   {user.avatar ? (
@@ -308,22 +308,22 @@ const WhiteboardMenu = ({
                   )}
                 </div>
               ))}
-              {activeUsers.length > 3 && (
-                <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-gray-400 text-white flex items-center justify-center text-[9px] sm:text-[10px] md:text-xs font-medium border-2 border-white">
-                  +{activeUsers.length - 3}
+              {activeUsers.length > 2 && (
+                <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-gray-400 text-white flex items-center justify-center text-[9px] sm:text-xs font-medium border-2 border-white">
+                  +{activeUsers.length - 2}
                 </div>
               )}
             </div>
-            <span className="hidden sm:inline text-xs md:text-sm text-gray-600">{activeUsers.length}</span>
+            <span className="text-[10px] sm:text-sm text-gray-600 font-medium">{activeUsers.length}</span>
           </button>
 
           {/* User Menu */}
-          <div className="flex items-center gap-1 px-1.5 sm:px-2 md:px-3 py-1 rounded hover:bg-gray-100 transition-colors">
-            <span className="hidden md:inline text-sm font-medium text-gray-700 truncate max-w-[100px]">{currentUser?.username}</span>
+          <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded hover:bg-gray-100 transition-colors">
+            <span className="hidden sm:inline text-xs sm:text-sm font-medium text-gray-700 max-w-[80px] sm:max-w-none truncate">{currentUser?.username}</span>
             <button
               onClick={onLogout}
-              className="text-gray-600 hover:text-red-600 transition-colors p-1"
-              title={`Logout${currentUser?.username ? ` (${currentUser.username})` : ''}`}
+              className="text-gray-600 hover:text-red-600 transition-colors p-0.5"
+              title={`Logout${currentUser?.username ? ' (' + currentUser.username + ')' : ''}`}
             >
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

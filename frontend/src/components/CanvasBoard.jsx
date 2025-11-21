@@ -45,6 +45,7 @@ const CanvasBoard = forwardRef(({
     if (selectedTool === 'select') setCursor('default');
     else if (selectedTool === 'text') setCursor('text');
     else if (selectedTool === 'fill') setCursor('alias');
+    else if (selectedTool === 'hand') setCursor('grab');
     else setCursor('crosshair');
   }, [selectedTool]);
   
@@ -1417,8 +1418,8 @@ const CanvasBoard = forwardRef(({
     // Ignore mouse events that are triggered by touch
     if (Date.now() - lastTouchTimeRef.current < 500) return;
 
-    if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
-      // Middle mouse or Ctrl+click for panning
+    if (e.button === 1 || (e.button === 0 && e.ctrlKey) || selectedTool === 'hand') {
+      // Middle mouse, Ctrl+click, or Hand tool for panning
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
       setCursor('grabbing');
@@ -1592,6 +1593,8 @@ const CanvasBoard = forwardRef(({
     let newCursor = cursor;
     if (isPanning) {
       newCursor = 'grabbing';
+    } else if (selectedTool === 'hand') {
+      newCursor = 'grab';
     } else if (isResizing) {
       // Keep current cursor
     } else if (isDragging) {
@@ -1664,6 +1667,7 @@ const CanvasBoard = forwardRef(({
     if (isPanning) {
        if (selectedTool === 'select') setCursor('default');
        else if (selectedTool === 'text') setCursor('text');
+       else if (selectedTool === 'hand') setCursor('grab');
        else setCursor('crosshair');
     }
   };
@@ -1712,18 +1716,44 @@ const CanvasBoard = forwardRef(({
   // Touch event handlers
   const handleTouchStart = (e) => {
     lastTouchTimeRef.current = Date.now();
+    
+    // Two-finger touch or Hand tool for panning
+    if (e.touches.length === 2 || selectedTool === 'hand') {
+      if (isDrawing) {
+        stopDrawing();
+      }
+      setIsPanning(true);
+      const touch = e.touches[0];
+      setPanStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
+      return;
+    }
+
     const pos = getTouchPos(e);
     startDrawing(pos);
   };
 
   const handleTouchMove = (e) => {
     lastTouchTimeRef.current = Date.now();
+    
+    if (isPanning) {
+      const touch = e.touches[0];
+      setPan({
+        x: touch.clientX - panStart.x,
+        y: touch.clientY - panStart.y
+      });
+      return;
+    }
+
     const pos = getTouchPos(e);
     draw(pos);
   };
 
   const handleTouchEnd = (e) => {
     lastTouchTimeRef.current = Date.now();
+    if (isPanning) {
+      setIsPanning(false);
+      return;
+    }
     stopDrawing();
   };
 
