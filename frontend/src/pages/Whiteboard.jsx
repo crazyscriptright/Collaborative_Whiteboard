@@ -754,6 +754,7 @@ const Whiteboard = () => {
                 selectedTool={selectedTool}
                 toolSettings={toolSettings}
                 activeUsers={activeUsers}
+                currentUser={user}
                 onBoardChange={handleBoardChange}
               />
             </div>

@@ -6,6 +6,7 @@ const CanvasBoard = forwardRef(({
   selectedTool,
   toolSettings,
   activeUsers,
+  currentUser,
   onBoardChange
 }, ref) => {
   const canvasRef = useRef(null);
@@ -75,8 +76,34 @@ const CanvasBoard = forwardRef(({
     undo: () => {
       setElements(prev => {
         if (prev.length === 0) return prev;
+        
+        // Find the last element created by the current user
+        let indexToRemove = -1;
+        // Check both id and _id to handle different user object structures
+        const currentUserId = currentUser?.id || currentUser?._id;
+        
+        if (!currentUserId) return prev;
+
+        for (let i = prev.length - 1; i >= 0; i--) {
+            if (prev[i].userId === currentUserId) {
+                indexToRemove = i;
+                break;
+            }
+        }
+
+        if (indexToRemove === -1) return prev;
+
         const newElements = [...prev];
-        const removed = newElements.pop();
+        const [removed] = newElements.splice(indexToRemove, 1);
+        
+        // Sync with server
+        if (board?._id) {
+          const elementId = removed.clientId || removed._id;
+          if (elementId) {
+            socketService.deleteElement(board._id, elementId);
+          }
+        }
+        
         setRedoStack(stack => [...stack, removed]);
         return newElements;
       });
@@ -86,6 +113,12 @@ const CanvasBoard = forwardRef(({
         if (prev.length === 0) return prev;
         const newStack = [...prev];
         const restored = newStack.pop();
+        
+        // Sync with server
+        if (board?._id) {
+          socketService.sendDrawing(board._id, { ...restored, persist: true });
+        }
+        
         setElements(els => [...els, restored]);
         return newStack;
       });
@@ -305,8 +338,8 @@ const CanvasBoard = forwardRef(({
           },
           imageData: e.target.result,
           timestamp: new Date(),
-          userId: board.owner,
-          username: 'current user'
+          userId: currentUser?.id || currentUser?._id,
+          username: currentUser?.username || 'current user'
         };
         
         setElements(prev => [...prev, element]);
@@ -502,7 +535,9 @@ const CanvasBoard = forwardRef(({
         coordinates: { x: pos.x, y: pos.y, width: 200, height: 150 },
         text: 'Double-click to edit',
         style: { ...toolSettings, fill: toolSettings.color },
-        timestamp: new Date()
+        timestamp: new Date(),
+        userId: currentUser?.id || currentUser?._id,
+        username: currentUser?.username || 'current user'
       };
       setElements(prev => [...prev, element]);
       if (board?._id) {
@@ -676,7 +711,9 @@ const CanvasBoard = forwardRef(({
         },
         text: '',
         style: { ...toolSettings, color: toolSettings.color, fontSize: 24 },
-        timestamp: new Date()
+        timestamp: new Date(),
+        userId: currentUser?.id || currentUser?._id,
+        username: currentUser?.username || 'current user'
       };
       
       const newElements = [...elements, element];
@@ -717,7 +754,9 @@ const CanvasBoard = forwardRef(({
     const baseElement = {
       clientId: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       timestamp: new Date(),
-      style: { ...toolSettings }
+      style: { ...toolSettings },
+      userId: currentUser?.id || currentUser?._id,
+      username: currentUser?.username || 'current user'
     };
 
     const start = currentPath[0];
@@ -1575,8 +1614,8 @@ const CanvasBoard = forwardRef(({
           },
           imageData: resultCanvas.toDataURL(),
           timestamp: new Date(),
-          userId: board.owner,
-          username: 'current user'
+          userId: currentUser?.id || currentUser?._id,
+          username: currentUser?.username || 'current user'
       };
       
       setElements(prev => [...prev, element]);
