@@ -163,6 +163,10 @@ class SocketService {
       this.emit('invite-received', data);
     });
 
+    this.socket.on('collaborator-added', (data) => {
+      this.emit('collaborator-added', data);
+    });
+
     // Connection health
     this.socket.on('pong', () => {
       this.emit('pong');

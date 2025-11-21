@@ -416,6 +416,28 @@ const initializeSocket = (io) => {
       });
     });
 
+    // Handle collaborator added event
+    socket.on('collaborator-added', async (data) => {
+      const { boardId, collaboratorId } = data;
+      try {
+        const board = await Board.findById(boardId).populate('collaborators.user', 'username avatar');
+        if (board) {
+          const collaborator = board.collaborators.find(c => c.user._id.toString() === collaboratorId);
+          // Broadcast to all users in the board
+          io.to(boardId).emit('collaborator-added', {
+            boardId,
+            collaborators: board.collaborators,
+            collaborator: collaborator ? {
+              username: collaborator.user.username,
+              avatar: collaborator.user.avatar
+            } : null
+          });
+        }
+      } catch (error) {
+        console.error('Collaborator added event error:', error);
+      }
+    });
+
     // Handle ping for connection health
     socket.on('ping', () => {
       socket.emit('pong');

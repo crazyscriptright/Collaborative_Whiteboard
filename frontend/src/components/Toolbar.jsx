@@ -157,6 +157,19 @@ const Toolbar = ({
   ];
 
   const strokeWidths = [1, 2, 4, 6, 8, 12, 16, 20];
+  const scrollContainerRef = React.useRef(null);
+
+  const scrollUp = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ top: -200, behavior: 'smooth' });
+    }
+  };
+
+  const scrollDown = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ top: 200, behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className={`fixed top-16 md:top-20 left-2 md:left-5 z-40 transition-transform duration-300 ${
@@ -164,7 +177,18 @@ const Toolbar = ({
     }`}>
       <div className="relative">
         <div className="w-56 md:w-64 max-w-[calc(100vw-40px)] bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col max-h-[calc(100vh-140px)] sm:max-h-[calc(100vh-120px)]">
-          <div className="p-3 sm:p-4 overflow-y-auto">
+          {/* Scroll Up Button - Mobile Only */}
+          <button
+            onClick={scrollUp}
+            className="md:hidden sticky top-0 z-10 w-full py-3 bg-gradient-to-b from-white to-transparent flex items-center justify-center text-gray-600 hover:text-amber-600 active:scale-95 transition-all"
+            aria-label="Scroll up"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7" />
+            </svg>
+          </button>
+          
+          <div ref={scrollContainerRef} className="p-3 sm:p-4 overflow-y-auto flex-1">
             {/* Tools Section */}
               <div className="mb-4 sm:mb-6">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Drawing Tools</h3>
@@ -316,6 +340,17 @@ const Toolbar = ({
               Clear Board
             </button>
           </div>
+          
+          {/* Scroll Down Button - Mobile Only */}
+          <button
+            onClick={scrollDown}
+            className="md:hidden sticky bottom-0 z-10 w-full py-3 bg-gradient-to-t from-white to-transparent flex items-center justify-center text-gray-600 hover:text-amber-600 active:scale-95 transition-all"
+            aria-label="Scroll down"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
         </div>
 
         {/* Toggle Button */}

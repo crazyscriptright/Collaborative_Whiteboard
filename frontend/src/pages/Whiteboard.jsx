@@ -333,6 +333,20 @@ const Whiteboard = () => {
       });
     });
 
+    socketService.on('collaborator-added', (data) => {
+      // Update board collaborators in real-time
+      if (data.boardId === boardId) {
+        setBoard(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            collaborators: data.collaborators
+          };
+        });
+        addNotification(`${data.collaborator.username} was added as a collaborator`, 'info');
+      }
+    });
+
     // Connection events
     socketService.on('connection-lost', () => {
       addNotification('Connection lost. Trying to reconnect...', 'warning');
@@ -461,13 +475,20 @@ const Whiteboard = () => {
         const newCollaborator = response.data.board.collaborators.find(c => c.user.email === shareEmail || c.user.username === shareEmail);
         if (newCollaborator && newCollaborator.user._id) {
           socketService.sendInvite(newCollaborator.user._id, board._id, board.title);
+          // Notify all board users about new collaborator
+          if (socketService.isSocketConnected()) {
+            socketService.socket.emit('collaborator-added', {
+              boardId: board._id,
+              collaboratorId: newCollaborator.user._id
+            });
+          }
         }
 
         setInviteLink(window.location.href);
         // Don't close modal immediately, show link
         // setIsShareModalOpen(false);
-        // Refresh board data to show new collaborator if needed
-        loadBoard(board._id);
+        // Update board state immediately
+        setBoard(response.data.board);
       } else {
         addNotification(response.message || 'Failed to share board', 'error');
       }
