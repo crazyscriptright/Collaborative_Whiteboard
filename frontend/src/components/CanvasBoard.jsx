@@ -319,9 +319,6 @@ const CanvasBoard = forwardRef(({
   };
 
   const handlePDFUpload = async (file) => {
-    // Note: For PDF preview, you'd need pdf.js library
-    // This is a placeholder implementation
-    console.log('PDF upload:', file.name);
     alert('PDF support requires pdf.js library. Placeholder implementation.');
   };
 

@@ -43,7 +43,6 @@ class SocketService {
 
       // Connection successful
       this.socket.on('connect', () => {
-        console.log('Socket connected successfully');
         this.isConnected = true;
         this.reconnectAttempts = 0;
         resolve();
@@ -63,7 +62,6 @@ class SocketService {
 
       // Disconnection
       this.socket.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason);
         this.isConnected = false;
         
         // Try to reconnect if it wasn't intentional
@@ -75,13 +73,11 @@ class SocketService {
 
       // Reconnection attempt
       this.socket.on('reconnect_attempt', (attemptNumber) => {
-        console.log(`Reconnection attempt ${attemptNumber}`);
         this.reconnectAttempts = attemptNumber;
       });
 
       // Reconnection successful
       this.socket.on('reconnect', (attemptNumber) => {
-        console.log(`Reconnected after ${attemptNumber} attempts`);
         this.isConnected = true;
         this.reconnectAttempts = 0;
         

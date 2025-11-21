@@ -16,7 +16,7 @@ const app = express();
 const server = http.createServer(app);
 
 // Environment variables
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 const NODE_ENV = process.env.NODE_ENV;
 const FRONTEND_URL = process.env.FRONTEND_URL || process.env.VITE_FRONTEND_URL || 'https://drawvix.vercel.app';
 
@@ -222,12 +222,12 @@ process.on('unhandledRejection', (reason, promise) => {
 // Start server
 server.listen(PORT, () => {
   console.log(`
-🚀 Server running on port ${PORT}
-📱 Environment: ${NODE_ENV}
-🌐 Frontend URL: ${FRONTEND_URL}
-💾 Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}
-⚡ Socket.io: Enabled
-🔒 CORS: Configured
+    Server running on port ${PORT}
+   Environment: ${NODE_ENV}
+   Frontend URL: ${FRONTEND_URL}
+   Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}
+   Socket.io: Enabled
+   CORS: Configured
   `);
 });
 
