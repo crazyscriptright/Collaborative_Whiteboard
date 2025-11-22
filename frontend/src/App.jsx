@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Whiteboard from './pages/Whiteboard';
+import NotFound from './pages/NotFound';
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
@@ -99,23 +100,7 @@ function App() {
           {/* Default redirects - remove the old default redirect */}
           
           {/* 404 fallback */}
-          <Route 
-            path="*" 
-            element={
-              <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-4">404 - Page Not Found</h1>
-                  <p className="text-lg text-gray-600 mb-8">The page you're looking for doesn't exist.</p>
-                  <button 
-                    onClick={() => window.location.href = '/'} 
-                    className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Go Home
-                  </button>
-                </div>
-              </div>
-            } 
-          />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>
