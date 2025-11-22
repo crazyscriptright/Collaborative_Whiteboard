@@ -108,7 +108,7 @@ const Footer = () => {
           
           <div className="text-center md:text-left">
             <h4 className="text-lg font-semibold mb-6 text-amber-900" style={{fontFamily: "'Playfair Display', serif"}}>Quick Links</h4>
-            <ul className="space-y-3 flex flex-col items-center md:items-start">
+            <ul className="space-y-3 md:space-y-3 flex flex-row md:flex-col justify-center md:justify-start items-center md:items-start gap-4 md:gap-0 flex-wrap">
               <li><Link to="/" className="text-amber-800/70 hover:text-amber-600 transition-colors duration-200 inline-flex items-center gap-2 group" style={{fontFamily: "'Inter', sans-serif"}}>
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
                 Home
