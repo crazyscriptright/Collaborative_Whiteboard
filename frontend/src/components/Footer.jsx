@@ -71,7 +71,7 @@ const Footer = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-6">
               <img src="/favicon/android-chrome-192x192.png" alt="Drawvix Logo" className="w-10 h-10 rounded-lg" />
@@ -106,22 +106,22 @@ const Footer = () => {
             </div>
           </div>
           
-          <div>
+          <div className="text-center md:text-left">
             <h4 className="text-lg font-semibold mb-6 text-amber-900" style={{fontFamily: "'Playfair Display', serif"}}>Quick Links</h4>
-            <ul className="space-y-3">
-              <li><Link to="/" className="text-amber-800/70 hover:text-amber-600 transition-colors duration-200 flex items-center gap-2 group" style={{fontFamily: "'Inter', sans-serif"}}>
+            <ul className="space-y-3 flex flex-col items-center md:items-start">
+              <li><Link to="/" className="text-amber-800/70 hover:text-amber-600 transition-colors duration-200 inline-flex items-center gap-2 group" style={{fontFamily: "'Inter', sans-serif"}}>
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
                 Home
               </Link></li>
-              <li><Link to="/whiteboard" className="text-amber-800/70 hover:text-amber-600 transition-colors duration-200 flex items-center gap-2 group" style={{fontFamily: "'Inter', sans-serif"}}>
+              <li><Link to="/whiteboard" className="text-amber-800/70 hover:text-amber-600 transition-colors duration-200 inline-flex items-center gap-2 group" style={{fontFamily: "'Inter', sans-serif"}}>
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
                 Whiteboard
               </Link></li>
-              <li><Link to="/login" className="text-amber-800/70 hover:text-amber-600 transition-colors duration-200 flex items-center gap-2 group" style={{fontFamily: "'Inter', sans-serif"}}>
+              <li><Link to="/login" className="text-amber-800/70 hover:text-amber-600 transition-colors duration-200 inline-flex items-center gap-2 group" style={{fontFamily: "'Inter', sans-serif"}}>
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
                 Sign In
               </Link></li>
-              <li><Link to="/register" className="text-amber-800/70 hover:text-amber-600 transition-colors duration-200 flex items-center gap-2 group" style={{fontFamily: "'Inter', sans-serif"}}>
+              <li><Link to="/register" className="text-amber-800/70 hover:text-amber-600 transition-colors duration-200 inline-flex items-center gap-2 group" style={{fontFamily: "'Inter', sans-serif"}}>
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
                 Get Started
               </Link></li>
